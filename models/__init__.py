@@ -123,12 +123,12 @@ class Employee(Model):
     job_title = fields.CharField(max_length=64)
     dept_id = fields.IntField()
     """
-    0 employee
-    1 expert
-    2 finance
-    9 admin
+    client
+    expert
+    finance
+    admin
     """
-    usertype = fields.IntField()
+    usertype = fields.TextField()
     comm = fields.TextField(null=True)
 
 

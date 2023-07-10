@@ -43,7 +43,7 @@ class PlanListService:
         eco_class_temp = await EcoClassModel.all().values()
         eco_class_list = {}
         for item in eco_class_temp:
-            eco_class_list[item[id]] = item['name']
+            eco_class_list[str(item['id'])] = item['name']
 
         for item in data:
 

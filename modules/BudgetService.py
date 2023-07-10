@@ -1,8 +1,9 @@
 from models import Budget, Employee, VetGroup, Department, EcoClassModel
 from utils.CRUD import crud
+from utils.Module import Module
 from utils.Vetting import vetting
 
-
+module_budget = Module('budget', url_prefix='/api/budget')
 @crud
 @vetting
 class BudgetService:
@@ -56,3 +57,10 @@ class BudgetService:
     @classmethod
     async def after_update(cls, data):
         return None
+module_budget.router_list([
+    ('/', BudgetService.Select),
+    ('/', BudgetService.Create),
+    ('/<id:int>', BudgetService.Update),
+    ('/<id:int>', BudgetService.Delete),
+    ('/<name:str>/<value>', BudgetService.SelectBy)
+])

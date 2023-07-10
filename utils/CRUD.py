@@ -77,17 +77,17 @@ def crud(cls):
 
             condition = {}
             for item in fields_list:
-                if item in request.POST:
-                    if request.POST.get(item) != __data__.__getattribute__(item):
-                        condition[item] = request.POST.get(item)
+                if item in request.form:
+                    if request.form.get(item) != __data__.__getattribute__(item):
+                        condition[item] = request.form.get(item)
             if hasattr(cls, 'before_update'):
                 condition = await cls.before_update(request, condition, __data__)
             if condition:
-                await __data__.update_from_dict(**condition)
+                await __data__.update_from_dict(condition)
                 await __data__.save()
             if hasattr(cls, 'after_update'):
                 __data__ = dict(__data__)
-                __data__ = cls.after_update(__data__)
+                __data__ = await cls.after_update(__data__)
             return self.success(data=__data__)
 
     class Delete(BaseView):

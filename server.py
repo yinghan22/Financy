@@ -1,7 +1,7 @@
 import traceback
 
 from sanic import Sanic
-from sanic_cors import CORS
+from sanic_ext import Extend
 from tortoise.contrib.sanic import register_tortoise
 
 from Config import Config
@@ -26,7 +26,11 @@ autodiscover(
     recursive=True,
 )
 
-CORS(app)
+app.config.CORS_ORIGINS = '*'
+app.config.CORS_ALLOW_HEADERS = '*'
+app.config.CORS_EXPOSE_HEADERS = 'X-token'
+
+Extend(app)
 
 
 @app.route('/api/test')
@@ -38,44 +42,45 @@ async def test(request):
 async def handle_exception(request, exception):
     tb = traceback.extract_tb(exception.__traceback__)[-1]
     message = f"异常:{tb.filename}:{tb.lineno}:{tb.name}> {tb.line}. 异常信息: {str(exception)}."
+    traceback.print_exc()
     return Response().error(message=message)
 
 
-# @app.middleware('request')
-# async def auth_middleware(request):
-#     if request.path != '/user/login':
-#         token = request.headers.get('X-token', '')
-#         async with request.app.ctx.redis as redis:
-#             temp = await redis.get(f"token:{token}")
-#             if temp is None:
-#                 return Response().error(message='请重新登录')
-#             else:
-#                 await redis.set(f"token:{token}", token, ex=Config['time']['three_day'])
-#             id = request.cookies.get('id', '').strip()
-#             token = request.cookies.get('token', '').strip()
-#             if id == '' or token == '':
-#                 return Response().error(message='请重新登录')
-#             __token__ = json.loads(await redis.hget('token', id))
-#             if token != __token__:
-#                 return Response().error(message='请重新登录')
+@app.middleware('request')
+async def auth_middleware(request):
+    if request.method in ['OPTIONS', 'options']:
+        res = Response().success()
+        res.headers['Access-Control-Allow-Origin'] = '*'
+        res.headers['Access-Control-Allow-Headers'] = '*'
+        res.headers['Access-Control-Expose-Headers'] = 'X-token'
+        return res
+    elif request.path != '/api/user/login':
+        token = request.headers.get('X-token', '')
+        if token == '':
+            return Response().error(message='请重新登录')
+        async with request.app.ctx.redis as redis:
+            temp = await redis.get(f"token:{token}")
+            if temp is None:
+                return Response().error(message='请重新登录')
+            else:
+                await redis.set(f"token:{token}", token, ex=Config['time']['three_day'])
 
 
-# @app.middleware('response')
-# async def session_middleware(request, response):
-#     if request.path not in ['/user/login', '/user/logout']:
-#         token = request.headers.get('X-token', '')
-#         async with request.app.ctx.redis as redis:
-#             temp = await redis.get(f"token:{token}")
-#             if temp is None:
-#                 return Response().error(message='请重新登录')
-#             else:
-#                 await redis.set(f"token:{token}", token, ex=Config['time']['three_day'])
-#                 response.headers.set('X-token', token)
-#
-#         id = request.cookies.get('id', '').strip()
-#         token = request.cookies.get('token', '').strip()
-#         response.cookies.add_cookie('id', id, max_age=Config['time']['three_day'])
-#         response.cookies.add_cookie('token', token, max_age=Config['time']['three_day'])
+@app.middleware('response')
+async def session_middleware(request, response):
+    if request.method in ['options', 'OPTIONS']:
+        return response
+    if request.path not in ['/api/user/login', '/api/user/logout']:
+        token = request.headers.get('X-token', '')
+        if token == '':
+            return Response().error(message='请重新登录')
+        async with request.app.ctx.redis as redis:
+            temp = await redis.get(f"token:{token}")
+            if temp is None:
+                return Response().error(message='请重新登录')
+            else:
+                await redis.set(f"token:{token}", token, ex=Config['time']['three_day'])
+                response.headers['X-token'] = token
 
 
 if __name__ == "__main__":

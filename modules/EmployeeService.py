@@ -27,10 +27,10 @@ class UserService:
     async def after_select(cls, data):
         dept_temp = await Department.all().values()
         for item in dept_temp:
-            department_list[item['id']] = item['name']
+            department_list[str(item['id'])] = item['name']
 
         for item in data:
-            item['dept_name'] = department_list[data['dept_id']]
+            item['dept_name'] = department_list[str(item['dept_id'])]
             del item['password']
         return data
 
@@ -42,8 +42,8 @@ class UserService:
                 raise ValueError(f"参数错误 {item} 不得为空")
         if confirm != param['password']:
             raise ValueError('两次输入密码不一致')
-        if param['dept'] == '':
-            param['dept'] = None
+        if param['dept_id'] == '':
+            param['dept_id'] = None
         param['password'] = pbkdf2_sha256.hash(confirm)
         __data__ = await cls.Model.filter(work_id='work_id').exists()
         if __data__:
@@ -131,8 +131,10 @@ class UserService:
             token = str(uuid.uuid1().hex)
 
             async with request.app.ctx.redis as redis:
-                await redis.set(f"token:{token}", data['id'], ex=Config.Config['time']['three_day'], )
-                response.headers.add('X-token', token)
+                __token__ = request.headers.get('X-token', '')
+                await redis.delete(f"token:{__token__}")
+                await redis.set(f"token:{token}", data['work_id'], ex=Config.Config['time']['three_day'], )
+                response.headers['X-token'] = token
             return response
 
     class Logout(BaseView):
