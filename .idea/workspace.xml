@@ -4,32 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f49726e7-6b1f-40af-a0b5-cc2ab2d031e1" name="更改" comment="">
+    <list default="true" id="f49726e7-6b1f-40af-a0b5-cc2ab2d031e1" name="更改" comment="备份还原优化">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3-shm" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/db.sqlite3-wal" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/BudgetService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/BudgetService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/DepartmentService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/DepartmentService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/EcoClassService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/EcoClassService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/EmployeeService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/EmployeeService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/FileSercice.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/FileSercice.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/JobRespService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/JobRespService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/PerGoalService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/PerGoalService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/PlanListService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/PlanListService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/ResearchInfoService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/ResearchInfoService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/TeachInfoService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/TeachInfoService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/VetGroupService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/VetGroupService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/VetterService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/VetterService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/WorkPlanService.py" beforeDir="false" afterPath="$PROJECT_DIR$/modules/WorkPlanService.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/BaseView.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/BaseView.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/CRUD.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/CRUD.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/Now.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/Now.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/ORM.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/ORM.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/Response.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/Response.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/Vetting.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/Vetting.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -120,8 +96,17 @@
       <option name="presentableId" value="Default" />
       <updated>1688931063080</updated>
       <workItem from="1688931067218" duration="13650000" />
-      <workItem from="1689032837710" duration="54246000" />
+      <workItem from="1689032837710" duration="55037000" />
     </task>
+    <task id="LOCAL-00001" summary="备份还原优化">
+      <option name="closed" value="true" />
+      <created>1689151823910</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1689151823910</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -137,6 +122,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="备份还原优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="备份还原优化" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
