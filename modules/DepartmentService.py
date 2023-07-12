@@ -23,7 +23,7 @@ class DeptService:
             raise ValueError('请输入部门名称')
         __data__ = await cls.Model.filter(name=param['name']).exists()
         if __data__:
-            return ValueError('部门名称已存在')
+            raise ValueError('部门名称已存在')
         param['pinyin'] = pinyin(param['name'])
         return param
 
@@ -44,8 +44,9 @@ class DeptService:
 
 
 module_department.router_list([
-    ('/', DeptService.Select),
-    ('/', DeptService.Create),
+    ('', DeptService.Select),
+    ('', DeptService.Create),
+    ('/<id:int>', DeptService.SelectIn),
     ('/<id:int>', DeptService.Update),
     ('/<id:int>', DeptService.Delete),
     ('/<name:str>/<value>', DeptService.SelectBy)

@@ -2,7 +2,7 @@ from models import Vetter, Employee, VetGroup
 from utils.CRUD import crud
 from utils.Module import Module
 
-module_vetter = Module('vetter', url_prefix='/api/vetter')
+module_vetter = Module('vetter', url_prefix='/api/expert_group')
 
 
 @crud
@@ -11,7 +11,7 @@ class VetterService:
 
     @classmethod
     async def before_create(cls, request, param):
-        __user__ = await Employee.filter(id=param['user_id']).exists()
+        __user__ = await Employee.filter(id=param['expert_id']).exists()
         if not __user__:
             raise ValueError('目标用户不存在')
         __group__ = await VetGroup.filter(id=param['group_id']).exists()
@@ -29,8 +29,9 @@ class VetterService:
 
 
 module_vetter.router_list([
-    ('/', VetterService.Create),
-    ('/', VetterService.Select),
+    ('', VetterService.Create),
+    ('', VetterService.Select),
+    ('/<id:int>', VetterService.SelectIn),
     ('/<id:int>', VetterService.Update),
     ('/<id:int>', VetterService.Delete),
     ('/<name:str>/<value>', VetterService.SelectBy)

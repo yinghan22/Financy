@@ -17,6 +17,7 @@ class Response(JSONResponse):
 
     def __init__(self, *args, **kwargs):
         super(Response, self).__init__(*args, **kwargs)
+        # self.headers['Content-Type'] = 'application/json'
 
     def set(self, data: object = None, message: str = 'success', status: int = 200, page_info: dict = None):
         self.__set_data__(data)

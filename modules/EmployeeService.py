@@ -9,7 +9,7 @@ import uuid
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
 
 import Config
-from models import Employee as Model, Department, Employee
+from models import Employee as Model, Department, Employee, Vetter, VetGroup
 from utils.BaseView import BaseView
 from utils.CRUD import crud
 from utils.Module import Module
@@ -37,7 +37,7 @@ class UserService:
     @classmethod
     async def before_create(cls, request, param):
         confirm = request.form.get('confirm', '').strip()
-        for item in ['work_id', 'name', 'password', 'usertype', 'job_title']:
+        for item in ['id', 'name', 'password', 'usertype', 'job_title']:
             if param[item] == '':
                 raise ValueError(f"参数错误 {item} 不得为空")
         if confirm != param['password']:
@@ -45,7 +45,7 @@ class UserService:
         if param['dept_id'] == '':
             param['dept_id'] = None
         param['password'] = pbkdf2_sha256.hash(confirm)
-        __data__ = await cls.Model.filter(work_id='work_id').exists()
+        __data__ = await cls.Model.filter(id=param['id']).exists()
         if __data__:
             raise ValueError('当前工号已存在')
         return param
@@ -109,11 +109,11 @@ class UserService:
         """登录"""
 
         async def post(self, request):
-            work_id = request.form.get('work_id', '').strip()
+            id = request.form.get('id', '').strip()
             password = request.form.get('password', '').strip()
-            if password == '' or work_id == '':
+            if password == '' or id == '':
                 return self.error(message='请输入工号和密码')
-            __data__ = await Model.filter(work_id=work_id).first()
+            __data__ = await Model.filter(id=id).first()
             if not __data__:
                 return self.error(message='用户名或密码错误')
             data = dict(__data__)
@@ -127,13 +127,20 @@ class UserService:
                     department_list[dept['id']] = dept['name']
             data['dept_name'] = department_list[data['dept_id']]
 
+            belong_group = await Vetter.filter(expert_id=data['id']).values()
+            all_group = await VetGroup.all().values()
+            group_info = {item['id']: item for item in all_group}
+            group_list = [group_info[item['group_id']] for item in belong_group]
+            data['group_list'] = group_list
+
             response = self.success(message='success', data=data)
+
             token = str(uuid.uuid1().hex)
 
             async with request.app.ctx.redis as redis:
                 __token__ = request.headers.get('X-token', '')
                 await redis.delete(f"token:{__token__}")
-                await redis.set(f"token:{token}", data['work_id'], ex=Config.Config['time']['three_day'], )
+                await redis.set(f"token:{token}", data['id'], ex=Config.Config['time']['three_day'], )
                 response.headers['X-token'] = token
             return response
 
@@ -148,14 +155,31 @@ class UserService:
                     await redis.delete(f"token:{token}")
             return self.success(message='success')
 
+    class SetPass(BaseView):
+        async def post(self, request, id):
+            __data__ = await Model.filter(id=id).first()
+            if not __data__:
+                return self.error(f"用户id为：{id}不存在")
+            password = request.form.get('password', '').strip()
+            confirm = request.form.get('confirm', '').strip()
+            if password == '':
+                return self.error('请输入密码')
+            elif password != confirm:
+                return self.error('两次输入的密码不一致')
+            __data__.password = pbkdf2_sha256.hash(password)
+            await __data__.save()
+            return self.success(message='success')
+
 
 module_user.router_list([
     ('', UserService.Select),
     ('', UserService.Create),
+    ('/<id:int>', UserService.SelectIn),
     ('/<id:int>', UserService.Update),
     ('/<id:int>', UserService.Delete),
-    ('/resetpass/<id:int>', UserService.ResetPassword),
-    ('/changepass/<id:int>', UserService.ChangePassword),
+    ('/resetpass/<id:str>', UserService.ResetPassword),
+    ('/changepass/<id:str>', UserService.ChangePassword),
+    ('/setpass/<id:str>', UserService.SetPass),
     ('/login', UserService.Login),
     ('/logout', UserService.Logout),
     ('/<name:str>/<value>', UserService.SelectBy)

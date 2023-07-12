@@ -42,6 +42,7 @@ async def test(request):
 async def handle_exception(request, exception):
     tb = traceback.extract_tb(exception.__traceback__)[-1]
     message = f"异常:{tb.filename}:{tb.lineno}:{tb.name}> {tb.line}. 异常信息: {str(exception)}."
+    traceback.print_stack()
     traceback.print_exc()
     return Response().error(message=message)
 
@@ -69,18 +70,22 @@ async def auth_middleware(request):
 @app.middleware('response')
 async def session_middleware(request, response):
     if request.method in ['options', 'OPTIONS']:
-        return response
-    if request.path not in ['/api/user/login', '/api/user/logout']:
+        pass
+    elif request.path not in ['/api/user/login', '/api/user/logout']:
         token = request.headers.get('X-token', '')
         if token == '':
-            return Response().error(message='请重新登录')
+            response = Response().error(message='请重新登录')
+            return
         async with request.app.ctx.redis as redis:
             temp = await redis.get(f"token:{token}")
             if temp is None:
-                return Response().error(message='请重新登录')
+                response = Response().error(message='请重新登录')
+                return
             else:
                 await redis.set(f"token:{token}", token, ex=Config['time']['three_day'])
                 response.headers['X-token'] = token
+                if response is None:
+                    print('\nNone is Response')
 
 
 if __name__ == "__main__":

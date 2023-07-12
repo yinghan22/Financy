@@ -15,6 +15,8 @@ from utils.Response import Response
 def is_number(value: str):
     if type(value) is not str:
         raise ValueError('传入的参数必须是字符串！')
+    if value[0].isalpha():
+        return False
     if len(value) > 2 and value.count('.', 1, -1) == 1:
         value = value.replace('.', '', 1)
     if value.isnumeric():
@@ -59,7 +61,7 @@ class BaseView(HTTPMethodView):
         return cls.response.bad_request(data, message, status)
 
     @classmethod
-    def sort(cls, data: list[dict], request, default_field='id') -> None:
+    def sort(cls, data: list[dict], request, default_field) -> None:
         """sort for dict
         默认 升序
         :param default_field: 
@@ -75,16 +77,21 @@ class BaseView(HTTPMethodView):
                 "there is no attribute named {} in data:dict".format(sort_by)
             )
 
-        data.sort(key=lambda e: int(e[sort_by]) if not is_number(str(e[sort_by])) else e[sort_by], reverse=reverse)
+        data.sort(key=lambda e: int(e[sort_by]) if is_number(str(e[sort_by])) else e[sort_by], reverse=reverse)
 
     @classmethod
     def paginate(cls, data, request):
         length = len(data)
 
         if length in [0, 1]:
-            return data, None
+            return data, {
+                'page_number': 1,
+                'total': 1,
+                'page_size': 1,
+                'page': 1
+            }
 
-        current_page = int(request.args.get("page", 1))
+        current_page = int(request.args.get("current_page", 1))
 
         page_size = int(request.args.get('page_size', length))
         page_size = length if page_size < 0 else page_size
@@ -103,11 +110,8 @@ class BaseView(HTTPMethodView):
             'page': current_page
         }
 
-        if total_page == 1:
-            page_info = None
-
         start = page_size * (current_page - 1)
-        end = page_size * page_size
+        end = page_size * current_page
 
         result = data[start:end]
 

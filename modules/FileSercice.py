@@ -22,41 +22,43 @@ def get_ext(filename):
     return os.path.splitext(filename)[1]
 
 
+async def saveFile(per_goal_id, file_list):
+    result = []
+    file_dir = path.join(os.path.dirname(__file__), '..', 'static')
+    for item in file_list:
+        file_name = item.name
+        file_ext = get_ext(file_name)
+        file_id = _uuid()
+
+        file_path = path.join(file_dir, f"{file_id}{file_ext}")
+        print(file_path)
+        async with aiofiles.open(file_path, 'wb') as file:
+            await file.write(item.body)
+        await file.close()
+        param = {
+            'id': file_id,
+            'per_goal_id': per_goal_id,
+            'name': file_name,
+            'ext': file_ext
+        }
+        await File(**param).save()
+        param['path'] = f"static/{file_id}{file_ext}"
+        result.append(param)
+    return result
+
+
 @crud
 class FileService:
     Model = File
 
     class Upload(BaseView):
         async def post(self, request):
-            uploader = request.form.get('uploader')
             per_goal_id = request.form.get('per_goal_id')
 
             file_list = request.files.getlist('file_list')
             # file_ext = get_ext()
 
-            result = []
-            file_dir = path.join(os.path.dirname(__file__), '..', 'static')
-            for item in file_list:
-                file_name = item.name
-                file_ext = get_ext(file_name)
-                file_id = _uuid()
-
-                file_path = path.join(file_dir, f"{file_id}{file_ext}")
-                print(file_path)
-                async with aiofiles.open(file_path, 'wb') as file:
-                    await file.write(item.body)
-                await file.close()
-                param = {
-                    'id': file_id,
-                    'per_goal_id': per_goal_id,
-                    'filename': file_name,
-                    'uploader': uploader,
-                    'upload_time': now(),
-                    'ext': file_ext
-                }
-                await File(**param).save()
-                param['path'] = f"static/{file_id}{file_ext}"
-                result.append(param)
+            result = await saveFile(file_list, per_goal_id)
 
             return self.success(data=result)
 
@@ -93,6 +95,7 @@ class FileService:
 
 module_file.router_list([
     ('/upload', FileService.Upload),
+    ('/<id:int>', FileService.SelectIn),
     ('/delete/<id>', FileService.DeleteFileByID),
     ('/<name:str>/<value>', FileService.SelectBy)
 ])

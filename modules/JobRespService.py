@@ -5,7 +5,7 @@
 @create  : 2023/05/03 17:16
 """
 
-from models import JobResp, Department, Employee, VetGroup
+from models import JobResp, Department, Employee, VetGroup, Vetter
 from utils.CRUD import crud
 from utils.Module import Module
 from utils.Vetting import vetting
@@ -22,15 +22,17 @@ class JobRespService:
     async def before_create(cls, request, param):
         if not param['dept_id'] or param['dept_id'] == '':
             raise ValueError('请输入教研室/部门/科室')
-        if not param['worker'] or param['worker'] == '':
+        if not param['operator_id'] or param['operator_id'] == '':
             raise ValueError('请输入经办人')
-        if not param['leader'] or param['leader'] == '':
+        if not param['leader_id'] or param['leader_id'] == '':
             raise ValueError('请输入责任领导')
-        if not param['content'] or param['content'].strip() == '':
+        if not param['detail'] or param['detail'].strip() == '':
             raise ValueError('请输入工作职责内容')
 
         dept_job_resp = await cls.Model.filter(dept_id=param['dept_id']).values()
-        dept_job_resp_index = max([item['index'] for item in dept_job_resp])
+        dept_job_resp_index = 0
+        if len(dept_job_resp):
+            dept_job_resp_index = max([item['index'] for item in dept_job_resp])
         param['index'] = dept_job_resp_index + 1
         dept = await Department.filter(id=param['dept_id']).first().values()
 
@@ -51,7 +53,14 @@ class JobRespService:
         group_temp = await VetGroup.all().values()
         group_list = {}
         for item in group_temp:
-            group_list[item['id']] = item['name']
+            __member__ = await Vetter.filter(group_id=item['id']).values()
+            tag = ""
+            for n in __member__:
+                if tag == '':
+                    tag = user_list[n['expert_id']]
+                else:
+                    tag += f", {user_list[n['expert_id']]}"
+            group_list[item['id']] = tag
 
         dept_temp = await Department.all().values()
         dept_list = {}
@@ -59,31 +68,26 @@ class JobRespService:
             dept_list[item['id']] = item['name']
 
         for item in data:
-            item['leader_name'] = user_list[item['leader']]
-            item['worker_name'] = user_list[item['worker']]
-
             item['dept_name'] = dept_list[item['dept_id']]
+            item['requester'] = str(item['requester'])
+            item['requester_name'] = user_list[item['requester']]
+            item['operator_name'] = user_list[item['operator_id']]
 
-            if item['applicant']:
-                item['applicant_name'] = user_list[item['applicant']]
+            item['leader_name'] = user_list[item['leader_id']]
+            item['applicant_tag'] = group_list[item['applicant_id']] if item['applicant_id'] else None
 
-            for index in range(1, 4):
-                label = f"vet_{index}"
-                if item[label]:
-                    item[f"{label}_name"] = group_list[item[label]]
-            if item['vet_3'] is not None:
-                item['term'] = 3
-            elif item['vet_2'] is not None:
-                item['term'] = 2
-            else:
-                item['term'] = 1
         return data
+
+    @classmethod
+    async def after_update(cls, data):
+        return None
 
 
 module_job_resp.router_list([
-    ('/', JobRespService.Select),
-    ('/', JobRespService.Create),
-    ('/vet/<id:int>', JobRespService.Vetting),
+    ('', JobRespService.Select),
+    ('', JobRespService.Create),
+    ('/<id:int>', JobRespService.SelectIn),
+    ('/approve/<id:int>', JobRespService.Vetting),
     ('/<id:int>', JobRespService.Update),
     ('/<id:int>', JobRespService.Delete),
     ('/<name:str>/<value>', JobRespService.SelectBy)

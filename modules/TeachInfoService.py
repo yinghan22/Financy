@@ -21,9 +21,8 @@ class TeachInfoService:
         if not param['dept_id'] or param['dept_id'] == '':
             raise ValueError('请输入教学院部名称')
         __data__ = await Department.filter(id=param['dept_id']).exists()
-        if __data__:
-            return ValueError('请输入有效的教学院部名称')
-
+        if not __data__:
+            raise ValueError('请输入有效的教学院部名称')
         return param
 
     @classmethod
@@ -32,11 +31,10 @@ class TeachInfoService:
 
     @classmethod
     async def before_update(cls, request, param, data):
-        if not param['dept_id'] or param['dept_id'] == '':
-            raise ValueError('请输入教学院部名称')
-        __data__ = await Department.filter(id=param['dept_id']).exists()
-        if __data__:
-            return ValueError('请输入有效的教学院部名称')
+        if 'dept_id' in param:
+            __data__ = await Department.filter(id=param['dept_id']).exists()
+            if not __data__:
+                raise ValueError('请输入有效的教学院部名称')
         return param
 
     @classmethod
@@ -53,8 +51,10 @@ class TeachInfoService:
 
 
 module_teach.router_list([
-    ('/', TeachInfoService.Select),
-    ('/', TeachInfoService.Create),
+    ('', TeachInfoService.Select),
+    ('', TeachInfoService.Create),
+
+    ('/<id:int>', TeachInfoService.SelectIn),
     ('/<id:int>', TeachInfoService.Update),
     ('/<id:int>', TeachInfoService.Delete),
     ('/<name:str>/<value>', TeachInfoService.SelectBy)

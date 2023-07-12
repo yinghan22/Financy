@@ -1,11 +1,13 @@
-from models import PlanList, Department, VetGroup, Employee, EcoClassModel, WorkPlan
+from models import PlanList, Department, VetGroup, Employee, EcoClassModel, WorkPlan, Vetter
 from utils.CRUD import crud
 from utils.Module import Module
+from utils.Vetting import vetting
 
-module_planlist = Module('planlist', url_prefix='/api/planlist')
+module_planlist = Module('planlist', url_prefix='/api/aebp')
 
 
 @crud
+@vetting
 class PlanListService:
     Model = PlanList
 
@@ -14,7 +16,9 @@ class PlanListService:
         if not param['dept_id'] or param['dept_id'] == '':
             raise ValueError('请输入教研室/部门/科室')
         dept_plan_list = await cls.Model.filter(dept_id=param['dept_id']).values()
-        dept_plan_list_index = max([item['index'] for item in dept_plan_list])
+        dept_plan_list_index = 0
+        if len(dept_plan_list):
+            dept_plan_list_index = max([item['index'] for item in dept_plan_list])
         param['index'] = dept_plan_list_index + 1
         dept = await Department.filter(id=param['dept_id']).first().values()
         param['code'] = f"PW{dept['pinyin']}{param['index']:02d}"
@@ -34,7 +38,14 @@ class PlanListService:
         group_temp = await VetGroup.all().values()
         group_list = {}
         for item in group_temp:
-            group_list[item['id']] = item['name']
+            __member__ = await Vetter.filter(group_id=item['id']).values()
+            tag = ""
+            for n in __member__:
+                if tag == '':
+                    tag = user_list[n['expert_id']]
+                else:
+                    tag += f", {user_list[n['expert_id']]}"
+            group_list[item['id']] = tag
         dept_temp = await Department.all().values()
         dept_list = {}
         for item in dept_temp:
@@ -46,28 +57,18 @@ class PlanListService:
             eco_class_list[str(item['id'])] = item['name']
 
         for item in data:
-
             item['dept_name'] = dept_list[item['dept_id']]
-            item['eco_class_name'] = eco_class_list[item['eco_class_id']]
-            item['work_plan_code'] = await WorkPlan.filter(work_plan_id=item['work_plan_id']).first().values()['code']
+            item['requester_name'] = user_list[item['requester']]
+            item['eco_class_name'] = eco_class_list[str(item['eco_class_id'])]
 
-            if item['applicant']:
-                item['applicant_name'] = user_list[item['applicant']]
+            item['applicant_tag'] = group_list[item['applicant_id']] if item['applicant_id'] else None
 
-            for index in range(1, 4):
-                label = f"vet_{index}"
-                if item[label]:
-                    item[f"{label}_name"] = group_list[item[label]]
-            if item['vet_3'] is not None:
-                item['term'] = 3
-            elif item['vet_2'] is not None:
-                item['term'] = 2
-            else:
-                item['term'] = 1
         return data
 
     @classmethod
     async def before_update(cls, request, param, data):
+        if 'carry_out' in param:
+            param['carry_out'] = param['carry_out'] in ['true', 'True', '1', 1]
         return param
 
     @classmethod
@@ -78,7 +79,9 @@ class PlanListService:
 module_planlist.router_list([
     ('', PlanListService.Create),
     ('', PlanListService.Select),
-    ('/<id:int>', PlanListService.Update),
-    ('/<id:int>', PlanListService.Delete),
+    ('/<id:int>', PlanListService.SelectIn),
+    ('/approve/<id:str>', PlanListService.Vetting),
+    ('/<id:str>', PlanListService.Update),
+    ('/<id:str>', PlanListService.Delete),
     ('/<name:str>/<value>', PlanListService.SelectBy)
 ])

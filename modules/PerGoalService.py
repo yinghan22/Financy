@@ -1,10 +1,10 @@
-from models import PerGoal, Department, Employee, VetGroup
-from modules.FileSercice import FileService
+from models import PerGoal, Department, Employee, VetGroup, Vetter
+from modules.FileSercice import FileService, saveFile
 from utils.CRUD import crud
 from utils.Module import Module
 from utils.Vetting import vetting
 
-module_pergoal = Module('pergoal', url_prefix='/api/pergoal')
+module_pergoal = Module('pergoal', url_prefix='/api/goal')
 
 
 @crud
@@ -18,7 +18,9 @@ class PerGoalService:
             raise ValueError('请输入教研室/部门/科室')
 
         dept_per_goal = await cls.Model.filter(dept_id=param['dept_id']).values()
-        dept_per_goal_index = max([item['index'] for item in dept_per_goal])
+        dept_per_goal_index = 0
+        if len(dept_per_goal):
+            dept_per_goal_index = max([item['index'] for item in dept_per_goal])
         param['index'] = dept_per_goal_index + 1
         dept = await Department.filter(id=param['dept_id']).first().values()
         param['code'] = f"PE{dept['pinyin']}{param['index']:02d}"
@@ -26,6 +28,14 @@ class PerGoalService:
 
     @classmethod
     async def after_create(cls, data):
+        return data
+
+    @classmethod
+    async def created(cls, request, data):
+        per_goal_id = data['id']
+        file_list = request.files.getlist('file_list')
+        if file_list:
+            await saveFile(per_goal_id, file_list)
         return None
 
     @classmethod
@@ -38,30 +48,28 @@ class PerGoalService:
         group_temp = await VetGroup.all().values()
         group_list = {}
         for item in group_temp:
-            group_list[item['id']] = item['name']
+            __member__ = await Vetter.filter(group_id=item['id']).values()
+            tag = ""
+            for n in __member__:
+                if tag == '':
+                    tag = user_list[n['expert_id']]
+                else:
+                    tag += f", {user_list[n['expert_id']]}"
+            group_list[item['id']] = tag
         dept_temp = await Department.all().values()
         dept_list = {}
         for item in dept_temp:
             dept_list[item['id']] = item['name']
 
         for item in data:
-
-            item['file_list'] = FileService.GetFileByPerGoalID(item['id'])
+            item['file_list'] = await FileService.GetFileByPerGoalID(per_goal_id=item['id'])
             item['dept_name'] = dept_list[item['dept_id']]
 
-            if item['applicant']:
-                item['applicant_name'] = user_list[item['applicant']]
+            item['requester'] = str(item['requester'])
+            item['requester_name'] = user_list[item['requester']]
 
-            for index in range(1, 4):
-                label = f"vet_{index}"
-                if item[label]:
-                    item[f"{label}_name"] = group_list[item[label]]
-            if item['vet_3'] is not None:
-                item['term'] = 3
-            elif item['vet_2'] is not None:
-                item['term'] = 2
-            else:
-                item['term'] = 1
+            item['applicant_tag'] = group_list[item['applicant_id']] if item['applicant_id'] else None
+
         return data
 
     @classmethod
@@ -70,13 +78,26 @@ class PerGoalService:
 
     @classmethod
     async def after_update(cls, data):
+        return data
+
+    @classmethod
+    async def updated(cls, request, data):
+        per_goal_id = data['id']
+        file_list = request.files.getlist('file_list')
+        if file_list:
+            await saveFile(per_goal_id, file_list)
         return None
+
+    @classmethod
+    async def after_delete(cls, request, id):
+        await FileService.deleteFile(per_goal_id=id)
 
 
 module_pergoal.router_list([
     ('', PerGoalService.Create),
     ('', PerGoalService.Select),
-    ('/vet/<id:int>', PerGoalService.Vetting),
+    ('/<id:int>', PerGoalService.SelectIn),
+    ('/approve/<id:int>', PerGoalService.Vetting),
     ('/<id:int>', PerGoalService.Update),
     ('/<id:int>', PerGoalService.Delete),
     ('/<name:str>/<value>', PerGoalService.SelectBy)

@@ -28,6 +28,7 @@ class EcoClassService:
 module_ecoclass.router_list([
     ('', EcoClassService.Select),
     ('', EcoClassService.Create),
+    ('/<id:int>', EcoClassService.SelectIn),
     ('/<id:int>', EcoClassService.Update),
     ('/<id:int>', EcoClassService.Delete),
     ('/<name:str>/<value>', EcoClassService.SelectBy)
