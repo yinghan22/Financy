@@ -8,9 +8,6 @@ iso8601==1.1.0
 multidict==6.0.4
 passlib==1.7.4
 pefile==2023.2.7
-pip==23.2.1
-pyinstaller==5.13.0
-pyinstaller-hooks-contrib==2023.6
 pypika-tortoise==0.1.6
 pypinyin==0.49.0
 pytz==2023.3
