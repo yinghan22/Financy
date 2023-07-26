@@ -1,3 +1,18 @@
+# 环境移植
+
+1. 下载依赖包至指定的目录
+
+```bash
+pip download -d ${dir}
+```
+
+2. 从指定目录源安装离线依赖
+
+```bash
+pip install --no-index --find-links=${dir}
+```
+
+
 完成情况
 
 1. 部门
