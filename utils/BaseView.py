@@ -61,7 +61,7 @@ class BaseView(HTTPMethodView):
         return cls.response.bad_request(data, message, status)
 
     @classmethod
-    def sort(cls, data: list[dict], request, default_field) -> None:
+    def sort(cls, data: list, request, default_field) -> None:
         """sort for dict
         默认 升序
         :param default_field: 
