@@ -1,4 +1,4 @@
-import json
+﻿import ujson as json
 
 from tortoise.expressions import Q
 
